@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🪐 Trọng Lực Các Hành Tinh</title>
+  <meta name="description" content="Khám phá trọng lực, kích thước và sức mạnh trên từng hành tinh trong hệ mặt trời!">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes sunPulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:.85;transform:scale(1.22)}}
+    @keyframes fallBall{
+      0%   {top:10px; opacity:1;}
+      100% {top:calc(100% - 22px); opacity:1;}
+    }
+    @keyframes bounceBall{
+      0%,100%{transform:scaleY(1) scaleX(1)}
+      95%    {transform:scaleY(.55) scaleX(1.5) translateY(4px)}
+    }
+  </style>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<div class="nebula"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <h1>🪐 TRỌNG LỰC CÁC HÀNH TINH</h1>
+    <p>Nhập cân nặng · Chọn hành tinh · Khám phá vũ trụ!</p>
+  </header>
+
+  <!-- WEIGHT INPUT -->
+  <div class="weight-section">
+    <label>⚖ CÂN NẶNG</label>
+    <input type="number" id="weight" value="60" min="1" max="500">
+    <span class="weight-unit">kg</span>
+  </div>
+
+  <!-- PLANET GRID -->
+  <div class="section-title">— Chọn Hành Tinh —</div>
+  <div class="planets-grid" id="planets-grid"></div>
+
+  <!-- SIZE COMPARISON SECTION -->
+  <div class="section-title" style="margin-top:10px;">— So Sánh Kích Thước & Thể Tích —</div>
+  <div class="size-compare-wrap">
+    <div class="size-compare-scroll" id="size-compare"></div>
+    <div class="size-compare-note">📏 Kích thước tỷ lệ theo căn bậc 3 thể tích • Trái Đất = chuẩn so sánh</div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div class="result-panel" id="result-panel">
+    <div id="planet-col-css">
+      <div class="result-grid">
+
+        <!-- LEFT: JUMP SCENE + FALL DEMO -->
+        <div class="left-col">
+          <!-- Jump scene -->
+          <div class="scene-wrap" id="scene-wrap">
+            <div class="scene-stars-overlay"></div>
+            <div class="ruler">
+              <div class="ruler-bar" id="ruler-bar" style="height:80px"></div>
+              <div class="ruler-label" id="ruler-label">~0.5m</div>
+            </div>
+            <div style="position:absolute;bottom:50px;left:50%;transform:translateX(-50%);">
+              <div id="astro-wrapper" class="astronaut-body astro-jump" style="--jh:-120px;--jdur:1.5s;">
+                <div id="astro-stage"></div>
+              </div>
+            </div>
+            <div class="scene-ground" id="scene-ground"></div>
+            <div class="ground-texture" id="scene-ground-tex"></div>
+          </div>
+          <div class="jump-compare" id="jump-compare"></div>
+
+          <!-- Falling ball demo -->
+          <div class="fall-demo-box">
+            <div class="fall-demo-title">🎱 Vật Rơi Tự Do</div>
+            <div class="fall-demo-sub" id="fall-demo-sub">từ độ cao 10m</div>
+            <div class="fall-track" id="fall-track">
+              <div class="fall-ball" id="fall-ball"></div>
+              <div class="fall-baseline"></div>
+            </div>
+            <div class="fall-time" id="fall-time">t = 0.0s</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: INFO -->
+        <div class="right-col">
+          <div class="planet-hero">
+            <div class="planet-hero-img" id="planet-hero-img"></div>
+            <div>
+              <div class="planet-hero-name" id="planet-hero-name"></div>
+              <div class="planet-hero-g" id="planet-hero-g"></div>
+            </div>
+          </div>
+
+          <!-- WEIGHT COMPARE -->
+          <div class="weight-compare">
+            <div class="w-card">
+              <div class="w-card-label">🌍 TRÁI ĐẤT</div>
+              <div class="w-card-val" id="earth-w">60</div>
+              <div class="w-card-unit">kg</div>
+            </div>
+            <div class="w-arrow">→</div>
+            <div class="w-card">
+              <div class="w-card-label" id="planet-w-label">HÀNH TINH</div>
+              <div class="w-card-val" id="planet-w">—</div>
+              <div class="w-card-unit">kg</div>
+            </div>
+          </div>
+
+          <!-- GRAVITY BAR -->
+          <div class="g-bar-section">
+            <div class="g-bar-labels">
+              <span>Gia tốc trọng trường</span>
+              <span id="g-label-r">9.81 m/s²</span>
+            </div>
+            <div class="g-bar-track">
+              <div class="g-bar-fill" id="g-bar-fill" style="width:3%"></div>
+            </div>
+          </div>
+
+          <!-- VOLUME INFO -->
+          <div class="vol-info-row" id="vol-info-row">
+            <div class="vol-info-item">
+              <span class="vol-info-label">📐 Bán kính</span>
+              <span class="vol-info-val" id="vol-radius">—</span>
+            </div>
+            <div class="vol-info-item">
+              <span class="vol-info-label">🌐 Thể tích</span>
+              <span class="vol-info-val" id="vol-volume">—</span>
+            </div>
+          </div>
+
+          <!-- STRENGTH CALCULATOR -->
+          <div class="strength-card" id="strength-card">
+            <div class="strength-title">💪 Sức Mạnh Của Bạn Trên Hành Tinh Này</div>
+            <div class="strength-lift-input">
+              <span>Trên Trái Đất bạn nâng tối đa</span>
+              <input type="number" id="lift-input" value="10" min="1" max="1000">
+              <span>kg</span>
+            </div>
+            <div class="strength-results">
+              <div class="str-row">
+                <div class="str-icon">🏋️</div>
+                <div class="str-text">
+                  <div class="str-label">Nâng 1 vật được</div>
+                  <div class="str-val" id="str-single">—</div>
+                </div>
+              </div>
+
+              <div class="str-desc" id="str-desc"></div>
+            </div>
+          </div>
+
+          <!-- FACT -->
+          <div class="fact-box" id="fact-box">Chọn một hành tinh để khám phá!</div>
+
+          <!-- BODY EFFECT -->
+          <div class="body-effect-box" id="body-effect-box" style="display:none;"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Dữ liệu từ NASA Solar System Exploration &amp; Universe Today &nbsp;·&nbsp; 2026</footer>
+<script src="app.js"></script>
+</body>
+</html>
