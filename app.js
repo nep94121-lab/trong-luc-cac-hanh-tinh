@@ -148,7 +148,7 @@ function makePlanetBall(p, size) {
       style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;
              display:block;position:relative;z-index:1;
              box-shadow:inset -${Math.round(s*.1)}px -${Math.round(s*.07)}px ${Math.round(s*.18)}px rgba(0,0,0,0.6);"
-      onerror="this.style.display='none'">
+      onerror="this.remove()">
     ${ring}
   </div>`;
 }
@@ -320,6 +320,7 @@ function buildCards() {
 let fallTimer = null;
 function runFallDemo(p) {
   const ball = document.getElementById('fall-ball');
+  if (!ball) return; // fall-ball removed, skip old demo
   const timeEl = document.getElementById('fall-time');
   const trackH = 120; // px (track height - ball size)
   const dropM = 100;  // metres simulated
@@ -367,8 +368,7 @@ function updateStrength(p) {
 
   document.getElementById('str-single').textContent =
     single >= 1000 ? `${(single/1000).toFixed(1)} TẤN` : `${Math.round(single)} kg`;
-  document.getElementById('str-juggle').textContent =
-    juggle3 >= 1000 ? `${(juggle3/1000).toFixed(1)} tấn/quả` : `${Math.round(juggle3)} kg/quả`;
+  { var _sj = document.getElementById('str-juggle'); if (_sj) _sj.textContent = juggle3 >= 1000 ? (juggle3/1000).toFixed(1)+' TAN' : Math.round(juggle3)+' kg'; }
 
   let desc = '';
   if (p.g <= 0.1)       desc = `🤩 Bạn mạnh như siêu nhân! Chỉ cần 1 ngón tay là có thể đẩy xe tải!`;
@@ -387,6 +387,9 @@ function updateStrength(p) {
 let currentPlanet = null;
 function selectPlanet(p) {
   currentPlanet = p;
+  // Sync carousel index
+  var ci = PLANETS.findIndex(function(x){ return x.id===p.id; });
+  if (ci >= 0) { carouselIndex = ci; carouselRender(); }
   document.querySelectorAll('.planet-card').forEach(c => c.classList.toggle('active', c.dataset.id===p.id));
   highlightSizeItem(p.id);
   updateResult();
@@ -414,7 +417,6 @@ function updateResult() {
   document.getElementById('planet-col-css').style.setProperty('--planet-col',p.color);
 
   // Weights
-  document.getElementById('earth-w').textContent = earthKg;
   document.getElementById('planet-w').textContent = planetKg;
   document.getElementById('planet-w-label').textContent = `kg trên ${p.name}`;
 
@@ -543,6 +545,136 @@ function spawnDust(color, dur) {
   window._dustTimer = setInterval(burst, dur*1000);
 }
 
+
+// ════════════════════════════════════════════════
+//  MULTI-PLANET FALL COMPARISON
+// ════════════════════════════════════════════════
+const FALL_COMPARE_IDS = ['moon','mars','earth','jupiter','sun'];
+let multiFallTimer = null;
+
+function buildMultiFall() {
+  var grid = document.getElementById('multi-fall-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  FALL_COMPARE_IDS.forEach(function(id) {
+    var p = PLANETS.find(function(x){ return x.id === id; });
+    if (!p) return;
+    var col = document.createElement('div');
+    col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:60px;max-width:120px;';
+    col.innerHTML =
+      '<div style="font-family:Orbitron,monospace;font-size:.5rem;color:'+p.color+';text-align:center;white-space:nowrap;margin-bottom:1px;">'+p.name+'</div>'
+      +'<div style="font-size:.42rem;color:rgba(255,255,255,0.35);font-family:Orbitron,monospace;text-align:center;margin-bottom:2px;">'+p.g+'g</div>'
+      +'<div style="position:relative;height:160px;width:90%;max-width:54px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.08);" id="mf-track-'+p.id+'">'
+        +'<div id="mf-ball-'+p.id+'" style="position:absolute;top:4px;left:50%;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0%,'+p.color+' 55%,#000 100%);box-shadow:0 0 10px '+p.color+';"></div>'
+        +'<div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.18);border-radius:999px;"></div>'
+      +'</div>'
+      +'<div id="mf-time-'+p.id+'" style="font-family:Orbitron,monospace;font-size:.58rem;font-weight:700;color:'+p.color+';text-align:center;min-height:16px;margin-top:3px;">0.0s</div>'
+      +'<img src="assets/planets/'+p.id+'.jpg" alt="'+p.name+'" '
+      +'style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid '+p.color+'44;margin-top:4px;box-shadow:0 0 8px '+p.color+'55;" '
+      +">";
+    grid.appendChild(col);
+  });
+}
+
+function runMultiFall() {
+  // Reset all balls to top
+  FALL_COMPARE_IDS.forEach(function(id) {
+    var ball = document.getElementById('mf-ball-'+id);
+    var timeEl = document.getElementById('mf-time-'+id);
+    if (ball) ball.style.top = '4px';
+    if (timeEl) timeEl.textContent = '0.0s';
+  });
+  clearInterval(multiFallTimer);
+  var elapsed = 0;
+  var dt = 1/60;
+  var trackH = 110; // usable px inside track
+  var dropM = 100;
+  var landed = {};
+  // Moon is slowest - use its time as cycle length
+  var moonG = 0.166 * 9.807;
+  var moonTime = Math.sqrt(2 * dropM / moonG); // ~11s
+
+  multiFallTimer = setInterval(function() {
+    elapsed += dt;
+    FALL_COMPARE_IDS.forEach(function(id) {
+      if (landed[id]) return;
+      var p = PLANETS.find(function(x){ return x.id === id; });
+      if (!p) return;
+      var gMs2 = p.g * 9.807;
+      var tFall = Math.sqrt(2 * dropM / gMs2);
+      var ball = document.getElementById('mf-ball-'+id);
+      var timeEl = document.getElementById('mf-time-'+id);
+      if (elapsed >= tFall) {
+        if (ball) ball.style.top = (trackH) + 'px';
+        if (timeEl) timeEl.textContent = tFall.toFixed(2)+'s ✓';
+        landed[id] = true;
+      } else {
+        var progress = (0.5 * gMs2 * elapsed * elapsed) / dropM;
+        if (ball) ball.style.top = (4 + progress * (trackH - 4)) + 'px';
+        if (timeEl) timeEl.textContent = elapsed.toFixed(2)+'s';
+      }
+    });
+    // All landed? restart after 2s
+    if (FALL_COMPARE_IDS.every(function(id){ return landed[id]; })) {
+      clearInterval(multiFallTimer);
+      setTimeout(runMultiFall, 2000);
+    }
+  }, 1000/60);
+}
+
+
+// ══ PLANET CAROUSEL ═════════════════════════════════
+var carouselIndex = 0;
+
+function carouselRender() {
+  var p = PLANETS[carouselIndex];
+  var imgEl = document.getElementById('carousel-planet-img');
+  var nameEl = document.getElementById('carousel-planet-name');
+  var gEl = document.getElementById('carousel-planet-g');
+  var dots = document.getElementById('carousel-dots');
+  if (!imgEl) return;
+
+  imgEl.innerHTML = makePlanetBall(p, 130);
+  imgEl.style.overflow = 'visible';
+  nameEl.textContent = p.nameEn || p.name;
+  nameEl.style.color = p.color;
+  nameEl.style.textShadow = '0 0 16px '+p.color;
+  gEl.textContent = p.g + 'g = ' + (p.g*9.807).toFixed(2) + ' m/s²';
+
+  // Dots
+  if (dots) {
+    dots.innerHTML = '';
+    PLANETS.forEach(function(_, i) {
+      var d = document.createElement('div');
+      d.style.cssText = 'width:7px;height:7px;border-radius:50%;cursor:pointer;transition:.2s;background:'
+        +(i===carouselIndex ? PLANETS[i].color : 'rgba(255,255,255,0.2)');
+      d.addEventListener('click', function(){ carouselIndex=i; carouselRender(); carouselSelectCurrent(); });
+      dots.appendChild(d);
+    });
+  }
+}
+
+function carouselSelectCurrent() {
+  selectPlanet(PLANETS[carouselIndex]);
+}
+
+function buildCarousel() {
+  var prev = document.getElementById('carousel-prev');
+  var next = document.getElementById('carousel-next');
+  if (!prev) return;
+  prev.addEventListener('click', function() {
+    carouselIndex = (carouselIndex - 1 + PLANETS.length) % PLANETS.length;
+    carouselRender();
+    carouselSelectCurrent();
+  });
+  next.addEventListener('click', function() {
+    carouselIndex = (carouselIndex + 1) % PLANETS.length;
+    carouselRender();
+    carouselSelectCurrent();
+  });
+  carouselRender();
+}
+
 // ════════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════════
@@ -550,10 +682,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initStars();
   buildCards();
   buildSizeComparison();
+  buildCarousel();
+  buildMultiFall();
+  runMultiFall();
 
   document.getElementById('weight').addEventListener('input', () => {
     if (currentPlanet) updateResult();
   });
+  const mfBtn = document.getElementById('multi-fall-restart');
+  if (mfBtn) mfBtn.addEventListener('click', function(){ runMultiFall(); });
+
   document.getElementById('lift-input').addEventListener('input', () => {
     if (currentPlanet) updateStrength(currentPlanet);
   });

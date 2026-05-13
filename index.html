@@ -31,15 +31,9 @@
   </header>
 
   <!-- WEIGHT INPUT -->
-  <div class="weight-section">
-    <label>⚖ CÂN NẶNG</label>
-    <input type="number" id="weight" value="60" min="1" max="500">
-    <span class="weight-unit">kg</span>
-  </div>
-
   <!-- PLANET GRID -->
-  <div class="section-title">— Chọn Hành Tinh —</div>
-  <div class="planets-grid" id="planets-grid"></div>
+  <div class="section-title" style="display:none">— Chọn Hành Tinh —</div>
+  <div class="planets-grid" id="planets-grid" style="display:none"></div>
 
   <!-- SIZE COMPARISON SECTION -->
   <div class="section-title" style="margin-top:10px;">— So Sánh Kích Thước & Thể Tích —</div>
@@ -55,6 +49,21 @@
 
         <!-- LEFT: JUMP SCENE + FALL DEMO -->
         <div class="left-col">
+          <!-- PLANET CAROUSEL -->
+          <div id="planet-carousel" style="padding:14px 10px 10px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.08);border-radius:18px;margin-bottom:14px;">
+            <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:rgba(255,255,255,0.35);letter-spacing:3px;text-align:center;margin-bottom:10px;">CHỌN HÀNH TINH</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button id="carousel-prev" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;flex-shrink:0;">&#9664;</button>
+              <div id="carousel-display" onclick="carouselSelectCurrent()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;min-height:130px;justify-content:center;">
+                <div id="carousel-planet-img" style="width:130px;height:130px;overflow:visible;"></div>
+                <div id="carousel-planet-name" style="font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;color:#fff;text-align:center;"></div>
+                <div id="carousel-planet-g" style="font-family:'Orbitron',monospace;font-size:.58rem;color:rgba(255,255,255,0.45);"></div>
+                <div style="font-size:.48rem;color:rgba(0,212,255,0.55);font-family:'Orbitron',monospace;letter-spacing:1px;">&#x2BC0; NHẤN ĐỂ CHỌN &#x2BC0;</div>
+              </div>
+              <button id="carousel-next" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;flex-shrink:0;">&#9654;</button>
+            </div>
+            <div id="carousel-dots" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:10px;"></div>
+          </div>
           <!-- Jump scene -->
           <div class="scene-wrap" id="scene-wrap">
             <div class="scene-stars-overlay"></div>
@@ -71,17 +80,6 @@
             <div class="ground-texture" id="scene-ground-tex"></div>
           </div>
           <div class="jump-compare" id="jump-compare"></div>
-
-          <!-- Falling ball demo -->
-          <div class="fall-demo-box">
-            <div class="fall-demo-title">🎱 Vật Rơi Tự Do</div>
-            <div class="fall-demo-sub" id="fall-demo-sub">từ độ cao 10m</div>
-            <div class="fall-track" id="fall-track">
-              <div class="fall-ball" id="fall-ball"></div>
-              <div class="fall-baseline"></div>
-            </div>
-            <div class="fall-time" id="fall-time">t = 0.0s</div>
-          </div>
         </div>
 
         <!-- RIGHT: INFO -->
@@ -98,7 +96,7 @@
           <div class="weight-compare">
             <div class="w-card">
               <div class="w-card-label">🌍 TRÁI ĐẤT</div>
-              <div class="w-card-val" id="earth-w">60</div>
+              <input type="number" id="weight" value="60" min="1" max="500" class="w-card-input">
               <div class="w-card-unit">kg</div>
             </div>
             <div class="w-arrow">→</div>
@@ -160,9 +158,19 @@
           <div class="body-effect-box" id="body-effect-box" style="display:none;"></div>
         </div>
 
+      </div><!-- /result-grid -->
+
+      <!-- MULTI-FALL FULL WIDTH -->
+      <div id="multi-fall-section" style="margin-top:18px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:18px 20px;">
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:rgba(255,255,255,0.65);letter-spacing:2px;text-align:center;margin-bottom:14px;">&#x2B07; Vật Rơi Tự Do &mdash; So Sánh Tốc Độ (từ 100m)</div>
+        <div id="multi-fall-grid" style="display:flex;gap:8px;justify-content:space-around;align-items:flex-start;width:100%;"></div>
+        <div style="text-align:center;margin-top:12px;">
+          <button id="multi-fall-restart" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;font-family:Orbitron,monospace;font-size:.52rem;padding:5px 18px;border-radius:999px;cursor:pointer;letter-spacing:1px;">&#x21BA; THẢ LẠI</button>
+        </div>
       </div>
-    </div>
-  </div>
+
+    </div><!-- /planet-col-css -->
+  </div><!-- /result-panel -->
 
 </div>
 
